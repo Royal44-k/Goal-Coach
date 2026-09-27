@@ -1,0 +1,33 @@
+# Allowlisted build context. Do not send private files to the Docker daemon.
+**
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.json
+!next.config.ts
+!next-env.d.ts
+!src/
+!src/**
+!public/
+!public/**
+!scripts/
+!scripts/**
+!drizzle/
+!drizzle/**
+**/node_modules/**
+**/.env*
+**/*.env
+**/*.env.*
+**/*.db
+**/*.db-*
+**/*.sqlite
+**/*.sqlite-*
+**/*.db3
+**/*.db3-*
+**/*.sqlite3
+**/*.sqlite3-*
+**/*.log
+**/*.tsbuildinfo
+**/*.test.*
+# Root data stays excluded; src/app/api/data/clear remains included.
+/data/

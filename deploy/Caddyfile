@@ -1,0 +1,38 @@
+{
+    servers {
+        timeouts {
+            read_header 15s
+            read_body 30s
+            write 15m
+            idle 2m
+        }
+    }
+}
+
+{$APP_ORIGIN} {
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+    request_body {
+        max_size 262144
+    }
+    # Local configuration/database readiness is private to the Docker network.
+    respond /api/health 404
+    reverse_proxy app:3000 {
+        # Never replay billed POST requests.
+        lb_retries 0
+        transport http {
+            dial_timeout 5s
+            response_header_timeout 15m
+            read_timeout 15m
+            write_timeout 30s
+            # Backend keepAliveTimeout is explicitly 65s; close idle proxy sockets first.
+            keepalive 30s
+        }
+    }
+}

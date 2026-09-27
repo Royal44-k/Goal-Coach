@@ -1,0 +1,70 @@
+import { readFileSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { expect, it } from "vitest";
+import { CheckInSchema, UndoRecordSchema } from "@/core/domain/contracts";
+import { createDatabase } from "./client";
+import { migrateDatabase } from "./migrate";
+import { createRepositories } from "../repositories/repository-factory";
+import { LOCAL_OWNER_ID as owner } from "../security/local-owner";
+import { contentHash } from "../security/canonical-json";
+import { createServiceContainer } from "../services/service-container";
+import { loadServerEnv } from "../config/env";
+import { UndoService } from "../operations/undo-service";
+
+it("migrates the applied original schema once, orders timestamp ties, and preserves old identities and operation bytes", async () => {
+  const db = createDatabase(":memory:");
+  try {
+    const sql = readFileSync("drizzle/0000_initial.sql", "utf8");
+    db.$client.exec(sql);
+    db.$client.exec("CREATE TABLE __drizzle_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, hash text NOT NULL, created_at numeric)");
+    db.$client.prepare("INSERT INTO __drizzle_migrations(hash,created_at) VALUES (?,?)").run(createHash("sha256").update(sql).digest("hex"), 1789478301933);
+    const goal = randomUUID(), plan = randomUUID(), task = randomUUID(), checkIn = randomUUID(), undo = randomUUID(), doneUndo = randomUUID();
+    db.$client.prepare("INSERT INTO goals(id,owner_id,title,category,status,agent_state,desired_outcome,definition_of_done,deadline,weekly_minutes,constraints,motivation,created_at,updated_at) VALUES (?,?,'旧目标','learning','active','active','完成练习','验证练习','2026-12-31',120,'[]','学习',1000,1000)").run(goal, owner);
+    db.$client.prepare("INSERT INTO plan_versions(id,owner_id,goal_id,number,status,change_source,diff,created_at,updated_at) VALUES (?,?,?,1,'approved','user','{}',1000,1000)").run(plan, owner, goal);
+    db.$client.prepare("INSERT INTO tasks(id,owner_id,goal_id,plan_version_id,title,action,done_criteria,evidence_type,estimate_minutes,dependency_ids,status,created_at,updated_at) VALUES (?,?,?,?,'任务','行动','完成','text',20,'[]','doing',1000,1000)").run(task, owner, goal, plan);
+    db.$client.prepare("INSERT INTO check_ins(id,owner_id,goal_id,task_id,kind,note,created_at,updated_at) VALUES (?,?,?,?,'progress','旧反馈',1000,1000)").run(checkIn, owner, goal, task);
+    const patch = '{"status":"doing","actualMinutes":null}', reverse = '{"status":"todo","actualMinutes":null}';
+    for (const [id, undoneAt] of [[undo, null], [doneUndo, 1000]] as const)
+      db.$client.prepare("INSERT INTO undo_records(id,owner_id,goal_id,task_id,forward_patch,reverse_patch,undone_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,1000,1000)").run(id, owner, goal, task, patch, reverse, undoneAt);
+    const createdAt = "1970-01-01T00:00:01.000Z";
+    const oldTaskResult = { task: { id: task, ownerId: owner, goalId: goal, planVersionId: plan, title: "任务", action: "行动", doneCriteria: "完成", evidenceType: "text", estimateMinutes: 20, actualMinutes: null, dueAt: null, dependencyIds: [], status: "todo", createdAt, updatedAt: createdAt, version: 2 } };
+    const checkBody = { taskId: task, kind: "progress", blockerCategory: null, note: "旧反馈", minutesSpent: null, availableWeeklyMinutes: null, expectedGoalVersion: 1 };
+    const checkArgs = { goalId: goal, ...checkBody };
+    const oldCheckResult = { checkIn: { id: checkIn, ownerId: owner, goalId: goal, taskId: task, kind: "progress", blockerCategory: null, note: "旧反馈", minutesSpent: null, availableWeeklyMinutes: null, createdAt, updatedAt: createdAt, version: 1 } };
+    const oldUndoOperation = randomUUID(), oldCheckOperation = randomUUID();
+    db.$client.prepare("INSERT INTO operations(id,owner_id,goal_id,operation_id,tool_name,parameter_hash,status,result,created_at,updated_at) VALUES (?,?,?,?,? ,?,'succeeded',?,1000,1000)").run(randomUUID(), owner, goal, oldUndoOperation, "undo_last_change", contentHash({ goalId: goal }), JSON.stringify(oldTaskResult));
+    db.$client.prepare("INSERT INTO operations(id,owner_id,goal_id,operation_id,tool_name,parameter_hash,status,result,created_at,updated_at) VALUES (?,?,?,?,? ,?,'succeeded',?,1000,1000)").run(randomUUID(), owner, goal, oldCheckOperation, "record_check_in", contentHash(checkArgs), JSON.stringify(oldCheckResult));
+    const operations = db.$client.prepare("SELECT * FROM operations").all();
+    migrateDatabase(db);
+    expect(db.$client.prepare("PRAGMA table_info(check_ins)").all()).toEqual(expect.arrayContaining([expect.objectContaining({ name: "withdrawn_at" })]));
+    const r = createRepositories(db);
+    const records = await r.support.listUndoRecordsByGoal(owner, goal);
+    expect(records.map(row => [row.id, row.ordinal, row.kind])).toEqual([[undo, 1, "task_execution"], [doneUndo, 2, "task_execution"], [expect.any(String), 3, "check_in"]]);
+    for (const row of records) expect(UndoRecordSchema.safeParse(row).success).toBe(true);
+    expect(records[1].undoneAt).toBe("1970-01-01T00:00:01.000Z");
+    expect(records[0]).toMatchObject({ forwardPatch: JSON.parse(patch), reversePatch: JSON.parse(reverse), version: 1 });
+    expect(await r.support.getLatestPendingUndo(owner, goal)).toMatchObject({ checkInId: checkIn });
+    const c = await r.support.getCheckIn(owner, checkIn);
+    expect(c).toMatchObject({ withdrawnAt: null, note: "旧反馈" });
+    expect(CheckInSchema.parse(oldCheckResult.checkIn).withdrawnAt).toBe(null);
+    const services = createServiceContainer({ repositories: r, env: loadServerEnv({}) });
+    expect(await services.tasks.undo(owner, goal, { operationId: oldUndoOperation })).toEqual(oldTaskResult);
+    expect(await services.tasks.recordCheckIn(owner, goal, { ...checkBody, operationId: oldCheckOperation })).toEqual({ ...oldCheckResult.checkIn, withdrawnAt: null });
+    migrateDatabase(db);
+    expect(await r.support.listUndoRecordsByGoal(owner, goal)).toEqual(records);
+    expect(db.$client.prepare("SELECT * FROM operations").all()).toEqual(operations);
+    expect(db.$client.pragma("foreign_key_check")).toEqual([]);
+    // Constraints are enforced by SQLite even if a caller bypasses the facade.
+    const insert = db.$client.prepare("INSERT INTO undo_records(id,owner_id,goal_id,kind,task_id,check_in_id,ordinal,forward_patch,reverse_patch,created_at,updated_at) VALUES (?,?,?,?,?,?,?,'{}','{}',1000,1000)");
+    expect(() => insert.run(randomUUID(), owner, goal, "check_in", task, checkIn, 4)).toThrow();
+    expect(() => insert.run(randomUUID(), owner, goal, "task_execution", task, null, 0)).toThrow();
+    expect(() => insert.run(randomUUID(), owner, goal, "task_execution", task, null, 1)).toThrow();
+    expect(() => insert.run(randomUUID(), owner, goal, "check_in", null, checkIn, 4)).toThrow();
+    db.$client.prepare("UPDATE goals SET current_plan_version_id = ? WHERE id = ?").run(plan, goal);
+    const undoService = new UndoService(r);
+    expect(await undoService.undoLast({ ownerId: owner, goalId: goal })).toMatchObject({ checkIn: { id: checkIn, withdrawnAt: expect.any(String) } });
+    expect(await undoService.undoLast({ ownerId: owner, goalId: goal })).toMatchObject({ task: { id: task, status: "todo", actualMinutes: null } });
+    expect(await r.support.getLatestPendingUndo(owner, goal)).toBeNull();
+    expect(db.$client.prepare("SELECT * FROM operations").all()).toEqual(operations);
+  } finally { db.$client.close(); }
+});

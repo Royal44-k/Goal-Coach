@@ -1,0 +1,124 @@
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { randomUUID } from "node:crypto";
+import { createDatabase } from "../db/client";
+import { migrateDatabase } from "../db/migrate";
+import { createRepositories } from "../repositories/repository-factory";
+import { createServiceContainer } from "../services/service-container";
+import { loadServerEnv } from "../config/env";
+import type { ModelClient, ModelTurn } from "./model-contracts";
+import { UsageBudgetService } from "./usage-budget";
+import { AppError } from "@/core/errors/app-error";
+let db: ReturnType<typeof createDatabase>;
+const response: ModelTurn = { text: "已记录。", toolCalls: [], usage: { inputTokens: 1, outputTokens: 1 }, finishReason: "stop" };
+beforeEach(() => { vi.stubEnv("APP_MODE", "invite"); db = createDatabase(":memory:"); migrateDatabase(db); });
+afterEach(() => { db.$client.close(); vi.unstubAllEnvs(); vi.useRealTimers(); });
+function fixture(client: ModelClient, now = () => new Date("2026-09-19T15:59:00Z"), env = loadServerEnv({})) {
+  const repositories = createRepositories(db);
+  return { repositories, service: createServiceContainer({ repositories, env, now, modelClientDecorator: () => client }) };
+}
+async function goal(service: ReturnType<typeof createServiceContainer>, owner: string) { return (await service.goals.create(owner, { category: "learning", initialMessage: "学习" })).goal.id; }
+const input = (goalId: string) => ({ goalId, message: "继续", requestOperationId: randomUUID() });
+it("allows one active turn per owner and two globally, releasing every lease after failure", async () => {
+  const pending: { resolve(value: ModelTurn): void; reject(error: Error): void }[] = [];
+  const { service } = fixture({ complete: () => new Promise((resolve, reject) => pending.push({ resolve, reject })) });
+  const a = randomUUID(), b = randomUUID(), c = randomUUID();
+  const [ag, ag2, bg, cg] = await Promise.all([goal(service, a), goal(service, a), goal(service, b), goal(service, c)]);
+  const first = service.agent.processTurn(a, input(ag)); const failed = first.catch(e => e);
+  await vi.waitFor(() => expect(pending).toHaveLength(1));
+  await expect(service.agent.processTurn(a, input(ag2))).rejects.toMatchObject({ status: 429 });
+  const second = service.agent.processTurn(b, input(bg));
+  await vi.waitFor(() => expect(pending).toHaveLength(2));
+  await expect(service.agent.processTurn(c, input(cg))).rejects.toMatchObject({ status: 429 });
+  expect(pending).toHaveLength(2);
+  pending[0].reject(new Error("synthetic failure")); await failed;
+  pending[1].resolve(response); await second;
+  const third = service.agent.processTurn(c, input(cg));
+  await vi.waitFor(() => expect(pending).toHaveLength(3)); pending[2].resolve(response); await third;
+});
+it("persists daily admissions across clear/recreation, exempts replay, and resets at Shanghai midnight", async () => {
+  vi.stubEnv("DAILY_AGENT_TURN_LIMIT", "1");
+  let now = new Date("2026-09-19T15:59:00Z"), calls = 0;
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(now);
+  const client = { complete: async () => { calls++; return response; } };
+  let { service } = fixture(client, () => now);
+  const owner = randomUUID(), id = await goal(service, owner), turn = input(id);
+  const result = await service.agent.processTurn(owner, turn);
+  expect(await service.agent.processTurn(owner, turn)).toEqual(result); expect(calls).toBe(1);
+  await expect(service.agent.processTurn(owner, input(id))).rejects.toMatchObject({ status: 429 });
+  const setting = await service.settings.get(owner);
+  await service.data.clear(owner, { confirmationPhrase: "清除我的全部本地数据", expectedSettingId: setting.id, operationId: randomUUID() });
+  service = fixture(client, () => now).service;
+  const fresh = await goal(service, owner);
+  await expect(service.agent.processTurn(owner, input(fresh))).rejects.toMatchObject({ status: 429 }); expect(calls).toBe(1);
+  now = new Date("2026-09-19T16:00:00Z");
+  vi.setSystemTime(now);
+  await service.agent.processTurn(owner, input(fresh)); expect(calls).toBe(2);
+});
+it("checks ownership and Qwen consent before daily admission or provider dispatch", async () => {
+  vi.stubEnv("DAILY_AGENT_TURN_LIMIT", "1"); let calls = 0;
+  const { service } = fixture({ complete: async () => { calls++; return response; } }, undefined, loadServerEnv({ MODEL_PROVIDER: "qwen", DASHSCOPE_API_KEY: "synthetic", DASHSCOPE_BASE_URL: "https://synthetic.example.invalid/v1" }));
+  const a = randomUUID(), b = randomUUID(), id = await goal(service, a);
+  await expect(service.agent.processTurn(b, input(id))).rejects.toMatchObject({ status: 404 });
+  await expect(service.agent.processTurn(a, input(id))).rejects.toMatchObject({ status: 403 }); expect(calls).toBe(0);
+  const setting = await service.settings.get(a); await service.settings.update(a, { expectedVersion: setting.version, privacyAccepted: true, privacyProvider: setting.provider, privacyPolicyVersion: "2026-09-24" });
+  await service.agent.processTurn(a, input(id)); expect(calls).toBe(1);
+});
+it("synchronizes server policy into persisted settings only when it differs", async () => {
+  const { repositories, service } = fixture({ complete: async () => response }); const owner = randomUUID();
+  const first = await service.settings.get(owner);
+  await repositories.support.updateAppSetting(owner, first.id, first.version, { provider: "qwen", fallbackEnabled: true, dailyInputTokenLimit: 999999 });
+  const effective = await service.settings.get(owner);
+  expect(effective).toMatchObject({ provider: "mock", fallbackEnabled: false, dailyInputTokenLimit: 100000, version: 3 });
+  expect(await service.settings.get(owner)).toEqual(effective);
+  expect(await repositories.support.getSettingsByOwner(owner)).toMatchObject({ provider: "mock", fallbackEnabled: false, dailyInputTokenLimit: 100000 });
+});
+it("retains invite token allowance usage after business data clear and service recreation", async () => {
+  let calls = 0; const client = { complete: async () => { calls++; return { ...response, usage: { inputTokens: 1, outputTokens: 5 } }; } };
+  const env = loadServerEnv({ DAILY_OUTPUT_TOKEN_LIMIT: "5" });
+  let { service } = fixture(client, () => new Date(), env);
+  const owner = randomUUID(); await service.agent.processTurn(owner, input(await goal(service, owner)));
+  const setting = await service.settings.get(owner);
+  await service.data.clear(owner, { confirmationPhrase: "清除我的全部本地数据", expectedSettingId: setting.id, operationId: randomUUID() });
+  service = fixture(client, () => new Date(), env).service;
+  await expect(service.agent.processTurn(owner, input(await goal(service, owner)))).rejects.toMatchObject({ code: "MODEL_BUDGET_EXCEEDED" });
+  expect(calls).toBe(1);
+});
+it("counts known late provider usage without resurrecting a cleared workspace", async () => {
+  let resolve!: (value: ModelTurn) => void;
+  const { service, repositories } = fixture({ complete: () => new Promise(done => { resolve = done; }) }, () => new Date());
+  const owner = randomUUID(), id = await goal(service, owner), turn = service.agent.processTurn(owner, input(id));
+  const outcome = turn.catch(error => error);
+  await vi.waitFor(() => expect(resolve).toBeDefined());
+  const setting = await service.settings.get(owner);
+  await service.data.clear(owner, { confirmationPhrase: "清除我的全部本地数据", expectedSettingId: setting.id, operationId: randomUUID() });
+  const clearedSetting = await repositories.support.getSettingsByOwner(owner);
+  resolve({ ...response, usage: { inputTokens: 77, outputTokens: 12 } });
+  expect(await outcome).toMatchObject({ code: "VERSION_CONFLICT" });
+  expect(await repositories.goals.list(owner)).toEqual([]);
+  expect(await repositories.support.getSettingsByOwner(owner)).toEqual(clearedSetting);
+  const receipts = db.$client.prepare("SELECT input_tokens, output_tokens FROM account_model_usage WHERE owner_id = ?").all(owner);
+  expect(receipts).toEqual([{ input_tokens: 77, output_tokens: 12 }]);
+});
+it("deduplicates content-free late settlement even after clear and rejects changed counts", async () => {
+  const { service, repositories } = fixture({ complete: async () => response }, () => new Date()); const owner = randomUUID();
+  const setting = await service.settings.get(owner), budget = new UsageBudgetService(repositories);
+  const admission = await budget.assertCanCall(owner, { model: "mock", messages: [{ role: "user", content: "hi" }], tools: [] });
+  await service.data.clear(owner, { confirmationPhrase: "清除我的全部本地数据", expectedSettingId: setting.id, operationId: randomUUID() });
+  const usage = { inputTokens: 4, outputTokens: 5 };
+  expect(await budget.settle(admission, usage)).toMatchObject({ status: "cancelled" });
+  expect(await budget.settle(admission, usage)).toMatchObject({ status: "cancelled" });
+  expect(await repositories.support.listAccountModelUsage(owner, admission.day)).toHaveLength(1);
+  await expect(budget.settle(admission, { inputTokens: 5, outputTokens: 5 })).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+});
+it.each(["tool", "timeout"])("checks withdrawn consent before the next %s Qwen dispatch", async kind => {
+  let resolve!: (value: ModelTurn) => void, reject!: (error: Error) => void, calls = 0;
+  const { service } = fixture({ complete: () => { calls++; return new Promise((done, fail) => { resolve = done; reject = fail; }); } }, () => new Date(), loadServerEnv({ MODEL_PROVIDER: "qwen", ENABLE_QWEN_FALLBACK: "true", DASHSCOPE_API_KEY: "synthetic", DASHSCOPE_BASE_URL: "https://synthetic.example.invalid/v1" }));
+  const owner = randomUUID(), id = await goal(service, owner);
+  const initial = await service.settings.get(owner); await service.settings.update(owner, { expectedVersion: initial.version, privacyAccepted: true, privacyProvider: initial.provider, privacyPolicyVersion: "2026-09-24" });
+  const turn = service.agent.processTurn(owner, input(id)), outcome = turn.catch(error => error);
+  await vi.waitFor(() => expect(calls).toBe(1));
+  const setting = await service.settings.get(owner); await service.settings.update(owner, { expectedVersion: setting.version, privacyAccepted: false });
+  if (kind === "timeout") reject(new AppError("MODEL_TIMEOUT", 504, "synthetic timeout"));
+  else resolve({ ...response, text: "", finishReason: "tool_calls", toolCalls: [{ id: randomUUID(), name: "get_goal", argumentsJson: JSON.stringify({ goalId: id }) }] });
+  expect(await outcome).toMatchObject({ code: "APPROVAL_REQUIRED" }); expect(calls).toBe(1);
+});

@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "scenario": "learning_user_chose_more_time",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "executedAt": "2026-09-27T09:35:22.849Z",
+  "realApiCalls": true,
+  "syntheticInputAndCompletionEvidence": true,
+  "acceptanceScope": "full_lifecycle_after_explicit_time_choice",
+  "passed": true,
+  "originalArtifactSha256": "5939c014cee7eab1147c7b14673f060e429409fcad238563ee050cc2670244b6",
+  "note": "Sanitized excerpt, not the raw report. IDs, full replies, internal reasoning and account data omitted. Not proof of real user outcomes.",
+  "contract": {
+    "title": "四周学习 TypeScript 并交付可运行待办网页",
+    "category": "learning",
+    "desiredOutcome": "在 2026-10-25 前学习 TypeScript，并交付一个可运行的待办网页，支持新增、完成、删除，以及刷新后保留数据。",
+    "definitionOfDone": "有一个可运行的待办网页：能新增待办、标记完成、删除待办，且刷新页面后数据仍然保留。",
+    "deadline": "2026-10-25",
+    "weeklyMinutes": 240,
+    "constraints": [],
+    "motivation": "先完成这个目标，再根据实际进展调整。"
+  },
+  "initialPlan": {
+    "milestones": [
+      "掌握 TypeScript 基础并能读懂/写出带类型的小模块",
+      "搭好待办网页的基本结构与本地数据存取",
+      "功能齐全：新增、完成、删除且刷新后保留",
+      "在期限内完成自测并交付可运行版本"
+    ],
+    "changeReason": "初次计划，依据已批准的四周目标（每周 240 分钟）拆分。",
+    "tasks": [
+      {
+        "number": 1,
+        "title": "学习 TypeScript 基础语法与类型",
+        "action": "用 4 次、每次约 60 分钟过一遍 TypeScript 基础：基础类型标注、接口/类型别名、函数与数组类型、可选属性；每部分随手写小例子并在本地编译通过。范围含阅读与动手练习，不含构建配置。工作量按每次一节估算，待你按实际进度核对。",
+        "doneCriteria": "有一份自写的基础练习文件（含类型标注的函数与数组操作），能在本地编译无报错。",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 240,
+        "dueAt": "2026-10-08",
+        "dependencyNumbers": []
+      },
+      {
+        "number": 2,
+        "title": "搭建可运行的页面骨架与数据存取",
+        "action": "用约 120 分钟建立可运行页面：一个输入框、一个列表区域，并用 localStorage 实现待办数据的写入与读取（含类型定义）。暂用简单 HTML/JS 或你偏好的轻量工具链均可，先跑通再说。工作量按搭建 + 调试各半估算，属暂定，待核对。",
+        "doneCriteria": "页面能在浏览器打开，输入待办并刷新后，该条目仍显示在列表中。",
+        "evidenceType": "user_declaration",
+        "estimateMinutes": 120,
+        "dueAt": "2026-10-16",
+        "dependencyNumbers": [
+          1
+        ]
+      },
+      {
+        "number": 3,
+        "title": "实现新增、完成、删除三个操作",
+        "action": "在已有页面上补齐三种操作并保证数据仍持久化：新增追加条目、点击切换完成状态、删除移除条目，每个操作都同步写入 localStorage。约 150 分钟，含边界情况（空输入、删除最后一条）调试。工作量暂定，待核对。",
+        "doneCriteria": "三种操作都能在页面上生效，且刷新后新增/完成状态/删除结果均正确保留。",
+        "evidenceType": "user_declaration",
+        "estimateMinutes": 150,
+        "dueAt": "2026-10-20",
+        "dependencyNumbers": [
+          2
+        ]
+      },
+      {
+        "number": 4,
+        "title": "按验收标准自测并修正问题",
+        "action": "对照完成标准逐项走一遍：新增、标记完成、删除、刷新后保留，记录发现的问题并修掉。约 120 分钟，其中测试与修正各约一半。工作量暂定，待核对。",
+        "doneCriteria": "四项验收操作逐一通过，且有一份自测记录（含发现的问题与修正结果）。",
+        "evidenceType": "text",
+        "estimateMinutes": 120,
+        "dueAt": "2026-10-23",
+        "dependencyNumbers": [
+          3
+        ]
+      },
+      {
+        "number": 5,
+        "title": "整理并交付可运行版本",
+        "action": "把可运行页面整理成便于交付的形式（入口文件与简短使用说明），确认最终版本仍满足全部完成标准。约 120 分钟，含整理与最终跑通。工作量暂定，待核对。",
+        "doneCriteria": "交付的可运行页面在全新浏览器会话中打开即可使用，且四项验收操作均正常。",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 120,
+        "dueAt": "2026-10-25",
+        "dependencyNumbers": [
+          4
+        ]
+      }
+    ],
+    "capacity": {
+      "estimatedRemainingMinutes": 969,
+      "proposedUnfinishedMinutes": 750
+    },
+    "invariants": {
+      "currentPlanUnchanged": true,
+      "withinCapacity": true
+    }
+  },
+  "replan": {
+    "milestones": [
+      "掌握 TypeScript 基础并能读懂/写出带类型的小模块",
+      "搭好待办网页的基本结构与本地数据存取",
+      "功能齐全：新增、完成、删除且刷新后保留",
+      "在期限内完成自测并交付可运行版本"
+    ],
+    "changeReason": "上一版“搭建可运行的页面骨架与数据存取”被记录为任务过大（开工即同时面对工具链、结构、数据结构与存取方式）。按 240 分钟/周恢复后的时间容量，将其拆为一个 20 分钟的独立起步任务（静态骨架可打开可见）与一个 100 分钟的延续任务（localStorage 读写 + 类型定义），两者估时合计 120 分钟，与原任务一致；其余未完成任务估时不变。",
+    "tasks": [
+      {
+        "number": 1,
+        "title": "学习 TypeScript 基础语法与类型",
+        "action": "用 4 次、每次约 60 分钟过一遍 TypeScript 基础：基础类型标注、接口/类型别名、函数与数组类型、可选属性；每部分随手写小例子并在本地编译通过。范围含阅读与动手练习，不含构建配置。工作量按每次一节估算，待你按实际进度核对。",
+        "doneCriteria": "有一份自写的基础练习文件（含类型标注的函数与数组操作），能在本地编译无报错。",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 240,
+        "dueAt": "2026-10-08",
+        "dependencyNumbers": []
+      },
+      {
+        "number": 2,
+        "title": "20 分钟：写出能在浏览器打开的静态骨架",
+        "action": "只做一件事：新建一个入口 HTML 文件，里面放一个输入框和一个空的列表区域（列表先留空，不接数据、不接逻辑），用浏览器打开确认这两样东西可见。不涉及 localStorage、不涉及类型定义、不涉及构建配置。约 20 分钟，属起步步骤，跑通后再进入下一步。",
+        "doneCriteria": "入口文件能在浏览器打开，页面上能看到一个输入框和一个空的列表区域。",
+        "evidenceType": "user_declaration",
+        "estimateMinutes": 20,
+        "dueAt": "2026-10-12",
+        "dependencyNumbers": [
+          1
+        ]
+      },
+      {
+        "number": 3,
+        "title": "为静态骨架接上 localStorage 存取与类型定义",
+        "action": "在已跑通的静态骨架上继续：定义待办的类型（如接口含 id/文本/完成状态），用 localStorage 实现待办数据的写入与读取，让输入的内容在重新打开页面后仍能显示在列表中。约 100 分钟，含数据结构与存取调试；此部分与上一步合计 120 分钟，沿用原任务工作量。",
+        "doneCriteria": "页面能在浏览器打开，输入待办并刷新后，该条目仍显示在列表中。",
+        "evidenceType": "user_declaration",
+        "estimateMinutes": 100,
+        "dueAt": "2026-10-16",
+        "dependencyNumbers": [
+          2
+        ]
+      },
+      {
+        "number": 4,
+        "title": "实现新增、完成、删除三个操作",
+        "action": "在已有页面上补齐三种操作并保证数据仍持久化：新增追加条目、点击切换完成状态、删除移除条目，每个操作都同步写入 localStorage。约 150 分钟，含边界情况（空输入、删除最后一条）调试。工作量暂定，待核对。",
+        "doneCriteria": "三种操作都能在页面上生效，且刷新后新增/完成状态/删除结果均正确保留。",
+        "evidenceType": "user_declaration",
+        "estimateMinutes": 150,
+        "dueAt": "2026-10-20",
+        "dependencyNumbers": [
+          3
+        ]
+      },
+      {
+        "number": 5,
+        "title": "按验收标准自测并修正问题",
+        "action": "对照完成标准逐项走一遍：新增、标记完成、删除、刷新后保留，记录发现的问题并修掉。约 120 分钟，其中测试与修正各约一半。工作量暂定，待核对。",
+        "doneCriteria": "四项验收操作逐一通过，且有一份自测记录（含发现的问题与修正结果）。",
+        "evidenceType": "text",
+        "estimateMinutes": 120,
+        "dueAt": "2026-10-23",
+        "dependencyNumbers": [
+          4
+        ]
+      },
+      {
+        "number": 6,
+        "title": "整理并交付可运行版本",
+        "action": "把可运行页面整理成便于交付的形式（入口文件与简短使用说明），确认最终版本仍满足全部完成标准。约 120 分钟，含整理与最终跑通。工作量暂定，待核对。",
+        "doneCriteria": "交付的可运行页面在全新浏览器会话中打开即可使用，且四项验收操作均正常。",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 120,
+        "dueAt": "2026-10-25",
+        "dependencyNumbers": [
+          5
+        ]
+      }
+    ],
+    "capacity": {
+      "estimatedRemainingMinutes": 969,
+      "proposedUnfinishedMinutes": 510
+    },
+    "invariants": {
+      "completedEvidencePreserved": true,
+      "unfinishedDuesWithinDeadline": true,
+      "unchangedWorkEstimatesPreserved": true,
+      "remainingWorkloadPreserved": true,
+      "withinCapacity": true
+    }
+  },
+  "explicitTimeChoice": {
+    "formalCommitmentsUnchanged": true,
+    "executionUnchanged": true,
+    "availabilityRecorded": true
+  },
+  "stages": [
+    {
+      "name": "create",
+      "passed": true,
+      "durationMs": 16
+    },
+    {
+      "name": "consent",
+      "passed": true,
+      "durationMs": 20
+    },
+    {
+      "name": "contract_draft",
+      "passed": true,
+      "durationMs": 3167
+    },
+    {
+      "name": "contract_approval",
+      "passed": true,
+      "durationMs": 33
+    },
+    {
+      "name": "plan_draft",
+      "passed": true,
+      "durationMs": 5020
+    },
+    {
+      "name": "plan_approval",
+      "passed": true,
+      "durationMs": 60
+    },
+    {
+      "name": "execution_undo",
+      "passed": true,
+      "durationMs": 82
+    },
+    {
+      "name": "first_evidence",
+      "passed": true,
+      "durationMs": 49
+    },
+    {
+      "name": "blocker_and_availability",
+      "passed": true,
+      "durationMs": 60
+    },
+    {
+      "name": "blocker_advice",
+      "passed": true,
+      "durationMs": 3176
+    },
+    {
+      "name": "explicit_user_time_choice",
+      "passed": true,
+      "durationMs": 40
+    },
+    {
+      "name": "replan_draft",
+      "passed": true,
+      "durationMs": 6720
+    },
+    {
+      "name": "replan_approval",
+      "passed": true,
+      "durationMs": 63
+    },
+    {
+      "name": "remaining_evidence",
+      "passed": true,
+      "durationMs": 178
+    },
+    {
+      "name": "review",
+      "passed": true,
+      "durationMs": 3103
+    },
+    {
+      "name": "completion",
+      "passed": true,
+      "durationMs": 117
+    },
+    {
+      "name": "owner_export",
+      "passed": true,
+      "durationMs": 79
+    }
+  ],
+  "usage": {
+    "actualProviderRequests": 7,
+    "knownInputTokens": 43869,
+    "knownOutputTokens": 4168
+  }
+}

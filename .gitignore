@@ -1,0 +1,44 @@
+# Dependencies and builds
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+dist/
+
+# Secrets
+.env
+.env.*
+*.env
+*.env.*
+!/.env.example
+!/deploy/.env.example
+
+# Local and exported data
+/data/
+exports/
+/evals/results/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db3
+*.db3-*
+*.sqlite3
+*.sqlite3-*
+
+# Local design companion state
+.superpowers/
+.worktrees/
+
+# Logs and OS files
+*.log
+pnpm-debug.log*
+*.tsbuildinfo
+.DS_Store
+Thumbs.db

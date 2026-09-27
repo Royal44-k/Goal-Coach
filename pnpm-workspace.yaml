@@ -1,0 +1,8 @@
+pmOnFail: ignore
+enableGlobalVirtualStore: false
+allowBuilds:
+  better-sqlite3@13.0.3: false
+  esbuild@0.18.20: false
+  esbuild@0.25.12: false
+  esbuild@0.28.2: false
+  unrs-resolver@1.12.2: false

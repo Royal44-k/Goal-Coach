@@ -1,0 +1,29 @@
+[
+  {
+    "path": "docs/examples/images/workspace-desktop.mock.png",
+    "sha256": "9ced66504b804f00e4cdaabe89a8859709ac6b67b2f8d56eef1f49c3cd333218",
+    "sourceTest": "create-goal-creates-review-5f978-pens-the-formal-active-goal-edge",
+    "provider": "mock",
+    "syntheticData": true,
+    "captureDate": "2026-09-27",
+    "physicalPhone": false
+  },
+  {
+    "path": "docs/examples/images/execution-mobile.mock.png",
+    "sha256": "b5b420c9cb2124913fb66a34401d5da01c3cce16f4ca7bdc9a24a13490374aae",
+    "sourceTest": "execute-task-executes-reco-0cf69--a-plan-without-model-calls-edge",
+    "provider": "mock",
+    "syntheticData": true,
+    "captureDate": "2026-09-27",
+    "physicalPhone": false
+  },
+  {
+    "path": "docs/examples/images/replan-review.mock.png",
+    "sha256": "f830347446a813e87a5fa82acf02a2411ec0ec20b3927123145291a401627b0a",
+    "sourceTest": "replan-diagnoses-a-blocker-02d73-ce-then-explicitly-approves-edge",
+    "provider": "mock",
+    "syntheticData": true,
+    "captureDate": "2026-09-27",
+    "physicalPhone": false
+  }
+]

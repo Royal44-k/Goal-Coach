@@ -1,0 +1,56 @@
+name: goal-coach
+services:
+  app:
+    image: ${GOAL_COACH_IMAGE:-goal-coach-agent:0.2.2}
+    build: .
+    restart: unless-stopped
+    init: true
+    environment:
+      APP_MODE: invite
+      APP_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN in the private root .env}
+      DATABASE_PATH: /app/data/goal-coach.db
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-mock}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-flash}
+      DEEPSEEK_MAX_OUTPUT_TOKENS: ${DEEPSEEK_MAX_OUTPUT_TOKENS:-4096}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-}
+      QWEN_MODEL: ${QWEN_MODEL:-qwen3.7-flash-2026-07-15}
+      QWEN_FALLBACK_MODEL: ${QWEN_FALLBACK_MODEL:-qwen3.7-plus-2026-05-26}
+      ENABLE_QWEN_FALLBACK: ${ENABLE_QWEN_FALLBACK:-false}
+      QWEN_MAX_OUTPUT_TOKENS: ${QWEN_MAX_OUTPUT_TOKENS:-2048}
+      DAILY_INPUT_TOKEN_LIMIT: ${DAILY_INPUT_TOKEN_LIMIT:-100000}
+      DAILY_OUTPUT_TOKEN_LIMIT: ${DAILY_OUTPUT_TOKEN_LIMIT:-30000}
+      DAILY_AGENT_TURN_LIMIT: ${DAILY_AGENT_TURN_LIMIT:-50}
+    volumes:
+      - app-data:/app/data
+    networks: [backend]
+    stop_grace_period: 15m
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  caddy:
+    image: caddy:2.11.4-alpine
+    restart: unless-stopped
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN in the private root .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [backend]
+    depends_on:
+      app:
+        condition: service_healthy
+networks:
+  backend:
+    driver: bridge
+volumes:
+  app-data:
+    name: ${GOAL_COACH_DATA_VOLUME:-goal-coach-data-v020}
+  caddy-data:
+  caddy-config:

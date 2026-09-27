@@ -1,0 +1,29 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1789478301933,
+      "tag": "0000_initial",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789718400000,
+      "tag": "0001_unified_undo",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789776000000,
+      "tag": "0002_invite_auth",
+      "breakpoints": true
+    },
+    { "idx": 3, "version": "6", "when": 1789862400000, "tag": "0003_agent_admissions", "breakpoints": true },
+    { "idx": 4, "version": "6", "when": 1790208000000, "tag": "0004_provider_privacy", "breakpoints": true }
+  ]
+}

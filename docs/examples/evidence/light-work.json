@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 1,
+  "scenario": "light_work_user_chose_more_time",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "executedAt": "2026-09-27T09:35:02.813Z",
+  "realApiCalls": true,
+  "syntheticInputAndCompletionEvidence": true,
+  "acceptanceScope": "full_lifecycle_after_explicit_time_choice",
+  "passed": true,
+  "originalArtifactSha256": "3c2720d3120ad218e47866ded71c7e43210a9d55a6c8aa142849561ba3641dff",
+  "note": "Sanitized excerpt, not the raw report. IDs, full replies, internal reasoning and account data omitted. Not proof of real user outcomes.",
+  "contract": {
+    "title": "我想在两周内用合成的团队会议样本完成整理演练，每周可投入 3 小时。截止 2026-10-11，交付可检索的演练目录，包含决议、负责人和待办项，并用合成样本验证",
+    "category": "light_work",
+    "desiredOutcome": "用合成团队会议样本完成一次整理演练，交付可检索的演练目录，其中包含决议、负责人和待办项，并用合成样本完成验证",
+    "definitionOfDone": "存在一份可检索的演练目录，覆盖合成团队会议样本中的决议、负责人和待办项，且已用合成样本完成验证",
+    "deadline": "2026-10-11",
+    "weeklyMinutes": 180,
+    "constraints": [],
+    "motivation": "先完成这个目标，再根据实际进展调整。"
+  },
+  "initialPlan": {
+    "milestones": [
+      "样本就绪：合成会议样本已确认，目录结构与字段约定已定",
+      "目录成型：决议、负责人、待办项已填入目录并可检索",
+      "验证完成：用合成样本逐条目核对，产出验证记录"
+    ],
+    "changeReason": null,
+    "tasks": [
+      {
+        "number": 1,
+        "title": "确认合成会议样本并定义目录结构",
+        "action": "准备或选定一批合成团队会议样本（例如 3 次会议记录），并确定演练目录的结构与必填字段：决议、负责人、待办项，以及便于检索的命名或标签方式。工作量暂按整理 3 份样本的规模估算，实际样本量不同可调整。",
+        "doneCriteria": "存在可用的合成会议样本，且目录结构和决议/负责人/待办项字段约定已写定",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 40,
+        "dueAt": "2026-09-30",
+        "dependencyNumbers": []
+      },
+      {
+        "number": 2,
+        "title": "从样本中提取决议与负责人",
+        "action": "逐份阅读合成样本，把每条决议及其负责人的对应关系提取出来，写入目录的相应字段。估时按 3 份样本逐条提取的节奏暂定，实际条目数不同可调整。",
+        "doneCriteria": "目录中每条决议都记录了内容与对应负责人，来源样本可追溯",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 40,
+        "dueAt": "2026-10-04",
+        "dependencyNumbers": [
+          1
+        ]
+      },
+      {
+        "number": 3,
+        "title": "补全待办项字段",
+        "action": "为目录中每条决议补充对应的待办项，写明事项内容与归属，使决议、负责人、待办项三类信息在同一目录内齐全。",
+        "doneCriteria": "每条需跟进的决议都有对应待办项记录，字段齐全无空缺",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 40,
+        "dueAt": "2026-10-07",
+        "dependencyNumbers": [
+          2
+        ]
+      },
+      {
+        "number": 4,
+        "title": "设置可检索方式并自测查找",
+        "action": "为目录加上可检索手段（如统一命名、标签或索引），并做几次查找测试：能否按关键词或负责人快速定位到对应决议与待办项。估时含设置与试查，按小规模样本暂定。",
+        "doneCriteria": "目录具备可检索方式，且按关键词或负责人查找能定位到相应条目",
+        "evidenceType": "text",
+        "estimateMinutes": 30,
+        "dueAt": "2026-10-09",
+        "dependencyNumbers": [
+          3
+        ]
+      },
+      {
+        "number": 5,
+        "title": "用合成样本逐条验证并留记录",
+        "action": "拿合成样本逐条回查目录：决议、负责人、待办项是否与样本一致、是否都能检索到，把核对结果写成一段验证记录，记录发现的缺漏与修正情况。",
+        "doneCriteria": "存在一份验证记录，逐条说明目录与合成样本的一致性核对结果",
+        "evidenceType": "text",
+        "estimateMinutes": 30,
+        "dueAt": "2026-10-11",
+        "dependencyNumbers": [
+          4
+        ]
+      }
+    ],
+    "capacity": {
+      "estimatedRemainingMinutes": 366,
+      "proposedUnfinishedMinutes": 180
+    },
+    "invariants": {
+      "currentPlanUnchanged": true,
+      "withinCapacity": true
+    }
+  },
+  "replan": {
+    "milestones": [
+      "样本就绪：合成会议样本已确认，目录结构与字段约定已定",
+      "起步跑通：第 1 份样本的决议与负责人已按字段填入目录，形成可照抄的模板",
+      "目录成型：决议、负责人、待办项已填入目录并可检索",
+      "验证完成：用合成样本逐条目核对，产出验证记录"
+    ],
+    "changeReason": "记录的卡点为起步范围过大，现按用户已恢复的每周 180 分钟，把首次提取拆成 20 分钟独立起步任务加 25 分钟续做，起步产出成为后续逐份提取的模板；未降低未完成工作总量。",
+    "tasks": [
+      {
+        "number": 1,
+        "title": "确认合成会议样本并定义目录结构",
+        "action": "准备或选定一批合成团队会议样本（例如 3 次会议记录），并确定演练目录的结构与必填字段：决议、负责人、待办项，以及便于检索的命名或标签方式。工作量暂按整理 3 份样本的规模估算，实际样本量不同可调整。",
+        "doneCriteria": "存在可用的合成会议样本，且目录结构和决议/负责人/待办项字段约定已写定",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 40,
+        "dueAt": "2026-09-30",
+        "dependencyNumbers": []
+      },
+      {
+        "number": 2,
+        "title": "起步：只填第 1 份样本的一条决议与负责人",
+        "action": "只打开第 1 份合成会议样本，挑出第一条明确写成决议的句子，把「决议内容 + 负责人姓名」按约定字段填进目录，然后停下。约 20 分钟，不追求覆盖全部条目。",
+        "doneCriteria": "目录中已有第 1 份样本至少一条决议及其负责人记录，可作为后续照抄的字段模板",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 20,
+        "dueAt": "2026-10-04",
+        "dependencyNumbers": [
+          1
+        ]
+      },
+      {
+        "number": 3,
+        "title": "按起步模板补齐样本中的决议与负责人",
+        "action": "沿用上一步跑通的字段写法，把 3 份合成样本中其余决议及其负责人逐条填进目录，保证来源样本可追溯。估时按 3 份样本逐条提取的节奏暂定，实际条目数不同可调整。",
+        "doneCriteria": "目录中每条决议都记录了内容与对应负责人，来源样本可追溯",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 25,
+        "dueAt": "2026-10-06",
+        "dependencyNumbers": [
+          2
+        ]
+      },
+      {
+        "number": 4,
+        "title": "补全待办项字段",
+        "action": "为目录中每条决议补充对应的待办项，写明事项内容与归属，使决议、负责人、待办项三类信息在同一目录内齐全。",
+        "doneCriteria": "每条需跟进的决议都有对应待办项记录，字段齐全无空缺",
+        "evidenceType": "file_metadata",
+        "estimateMinutes": 40,
+        "dueAt": "2026-10-08",
+        "dependencyNumbers": [
+          3
+        ]
+      },
+      {
+        "number": 5,
+        "title": "设置可检索方式并自测查找",
+        "action": "为目录加上可检索手段（如统一命名、标签或索引），并做几次查找测试：能否按关键词或负责人快速定位到对应决议与待办项。估时含设置与试查，按小规模样本暂定。",
+        "doneCriteria": "目录具备可检索方式，且按关键词或负责人查找能定位到相应条目",
+        "evidenceType": "text",
+        "estimateMinutes": 30,
+        "dueAt": "2026-10-10",
+        "dependencyNumbers": [
+          4
+        ]
+      },
+      {
+        "number": 6,
+        "title": "用合成样本逐条验证并留记录",
+        "action": "拿合成样本逐条回查目录：决议、负责人、待办项是否与样本一致、是否都能检索到，把核对结果写成一段验证记录，记录发现的缺漏与修正情况。",
+        "doneCriteria": "存在一份验证记录，逐条说明目录与合成样本的一致性核对结果",
+        "evidenceType": "text",
+        "estimateMinutes": 30,
+        "dueAt": "2026-10-11",
+        "dependencyNumbers": [
+          5
+        ]
+      }
+    ],
+    "capacity": {
+      "estimatedRemainingMinutes": 366,
+      "proposedUnfinishedMinutes": 145
+    },
+    "invariants": {
+      "completedEvidencePreserved": true,
+      "unfinishedDuesWithinDeadline": true,
+      "unchangedWorkEstimatesPreserved": true,
+      "remainingWorkloadPreserved": true,
+      "withinCapacity": true
+    }
+  },
+  "explicitTimeChoice": {
+    "formalCommitmentsUnchanged": true,
+    "executionUnchanged": true,
+    "availabilityRecorded": true
+  },
+  "stages": [
+    {
+      "name": "create",
+      "passed": true,
+      "durationMs": 16
+    },
+    {
+      "name": "consent",
+      "passed": true,
+      "durationMs": 19
+    },
+    {
+      "name": "contract_draft",
+      "passed": true,
+      "durationMs": 2724
+    },
+    {
+      "name": "contract_approval",
+      "passed": true,
+      "durationMs": 32
+    },
+    {
+      "name": "plan_draft",
+      "passed": true,
+      "durationMs": 4126
+    },
+    {
+      "name": "plan_approval",
+      "passed": true,
+      "durationMs": 63
+    },
+    {
+      "name": "execution_undo",
+      "passed": true,
+      "durationMs": 87
+    },
+    {
+      "name": "first_evidence",
+      "passed": true,
+      "durationMs": 42
+    },
+    {
+      "name": "blocker_and_availability",
+      "passed": true,
+      "durationMs": 56
+    },
+    {
+      "name": "blocker_advice",
+      "passed": true,
+      "durationMs": 2752
+    },
+    {
+      "name": "explicit_user_time_choice",
+      "passed": true,
+      "durationMs": 39
+    },
+    {
+      "name": "replan_draft",
+      "passed": true,
+      "durationMs": 5692
+    },
+    {
+      "name": "replan_approval",
+      "passed": true,
+      "durationMs": 69
+    },
+    {
+      "name": "remaining_evidence",
+      "passed": true,
+      "durationMs": 188
+    },
+    {
+      "name": "review",
+      "passed": true,
+      "durationMs": 2938
+    },
+    {
+      "name": "completion",
+      "passed": true,
+      "durationMs": 44
+    },
+    {
+      "name": "owner_export",
+      "passed": true,
+      "durationMs": 23
+    }
+  ],
+  "usage": {
+    "actualProviderRequests": 7,
+    "knownInputTokens": 43526,
+    "knownOutputTokens": 3766
+  }
+}
